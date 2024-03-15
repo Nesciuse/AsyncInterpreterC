@@ -136,19 +136,6 @@ static inline void print_expression(const char *start, const char *end) {
     #endif
 }
 
-const char *VariableTypeString[] = {
-    "int",
-    "float",
-    "string",
-    "keyword",
-    "variable",
-    "reference",
-    "evalexpr",
-    "dictionary",
-    "end",
-    "null"
-};
-
 void eval_error(Variable a, Variable b, const char *operation) {
     print_error("eval error can't use '%s' between type %s and %s", operation, VariableTypeString[a.type], VariableTypeString[b.type]);
 }

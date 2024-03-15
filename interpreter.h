@@ -46,10 +46,13 @@ void _print(Context *c);
 
 Context *new_context();
 void free_context(Context *c);
-void run_context(void *d);
+void run_context(void *);
 void asleep(Context *c);
 void _add(Context *c);
-void a_move_forward(void *p);
+gboolean a_move_forward(void *p);
 void a_move_forward_start(Context *c);
-void run_context(void *d);
 void start_program(Program program, CallbackFunctionPointer final_callback, void *data);
+void print_end(void *text);
+void quit(void *loop);
+
+extern GMainLoop *loop;
