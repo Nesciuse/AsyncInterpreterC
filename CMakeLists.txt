@@ -7,8 +7,10 @@ include_directories(
 )
 
 add_executable(simple
+    main.c
     interpreter.c
     map.c
+    variable_type.c
 )
 
 target_link_directories(simple
