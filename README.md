@@ -1,4 +1,6 @@
 # Async Interpreter C
 Téma: Asynchrónny interpreter
+
 Anotácia: Pri asynchrónnom programovaní sa zvyčajne v rámci hlavnej slučky programu (mainloop) vykonávajú rôzne asynchrónne operácie. Asynchrónna funkcia je potom funkcia, ktorá môže okrem synchrónnych operácií obsahovať aj asynchrónne. Vykonanie asynchrónnej operácie potom znamená pozastavenie / odloženie celej funkcie, kým táto operácia neskončí. Hlavná slučka medzitým môže vykonávať iné operácia / funkcie. Keď daná operácia skončí, vykonávanie funkcie musí byť obnovené na správnom mieste.
+
 Cieľ: Navrhnúť a implementovať interpreter jednoduchých inštrukcií, ktoré sú ale "asynchrónne". Inštrukcie by mali zahŕňať prácu s premennými, príkazy na kontrolu toku programu a volania podprogramov / funkcií. Interpreter by mal byť ľahko použiteľný v rôznych C/C++ projektoch s asynchrónnym dizajnom.
