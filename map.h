@@ -1,3 +1,6 @@
+#ifndef H_MAP
+#define H_MAP
+
 #include "variable_type.h"
 
 struct map_struct {
@@ -23,3 +26,5 @@ Variable evaluate(MapObject *locals, const char *expr);
 extern Variable def;
 
 void eval_testing();
+
+#endif

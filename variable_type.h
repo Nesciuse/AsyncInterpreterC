@@ -1,3 +1,6 @@
+#ifndef H_VARIABLE_TYPE
+#define H_VARIABLE_TYPE
+
 typedef enum  {
     Integer = 0,
     Float,
@@ -27,3 +30,5 @@ typedef struct {
 #define str(txt) {.type=String,.s=txt}
 #define var(id) {.type=Var,.s=#id}
 #define keyword(key) {.type=KeyWord,.i=key}
+
+#endif

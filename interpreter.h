@@ -1,3 +1,6 @@
+#ifndef H_INTERPRETER
+#define H_INTERPRETER
+
 #include "map.h"
 
 typedef Variable ProgramLine[4];
@@ -56,3 +59,5 @@ void print_end(void *text);
 void quit(void *loop);
 
 extern GMainLoop *loop;
+
+#endif
