@@ -6,10 +6,6 @@
 
 static int map_get_index(MapObject *map, const char *key);
 static void map_bloat(MapObject *map);
-static void map_set(MapObject *map, const char *key, Variable value);
-static void map_setint(MapObject *map, const char *key, int value);
-static Variable map_get(MapObject *map, const char *key);
-static Variable map_remove(MapObject *map, const char *key);
 
 Variable def = {.i=0};
 
@@ -22,16 +18,12 @@ MapObject *new_default_map(Variable def_val) {
         .size = MAP_DEFAULT_SIZE,
         .def_val = def_val,
         .keys = malloc(sizeof(char *) * MAP_DEFAULT_SIZE),
-        .values = malloc(sizeof(Variable) * MAP_DEFAULT_SIZE),
-        .set = map_set,
-        .get = map_get,
-        .setint = map_setint,
-        .remove = map_remove
+        .values = malloc(sizeof(Variable) * MAP_DEFAULT_SIZE)
     };
     return map;
 }
 
-static Variable set_default(MapObject *map, Variable default_value) {
+Variable map_set_default(MapObject *map, Variable default_value) {
     Variable original = map->def_val;
     map->def_val = default_value;
     return original;
@@ -63,7 +55,7 @@ static void map_bloat(MapObject *map) {
     exit(1);
 }
 
-static void map_set(MapObject *map, const char *key, Variable value) {
+void map_set(MapObject *map, const char *key, Variable value) {
     int i = map_get_index(map, key);
     if(i == -1) {
         int last_element_index = map->elements;
@@ -79,11 +71,11 @@ static void map_set(MapObject *map, const char *key, Variable value) {
     }
 }
 
-static void map_setint(MapObject *map, const char *key, int value) {
+void map_setint(MapObject *map, const char *key, int value) {
     map_set(map, key, (Variable){.i = value});
 }
 
-static Variable map_remove(MapObject *map, const char *key) {
+Variable map_remove(MapObject *map, const char *key) {
     int ix = map_get_index(map, key);
     if(ix == -1) {
         return def;
@@ -100,7 +92,7 @@ static Variable map_remove(MapObject *map, const char *key) {
     return original;
 }
 
-static Variable map_get(MapObject *map, const char *key) {
+Variable map_get(MapObject *map, const char *key) {
     int i = map_get_index(map, key);
     if(i == -1) {
         return map->def_val;
@@ -501,7 +493,7 @@ static Variable eval_identifier(MapObject *locals, const char *start, const char
     char *key = malloc(l+1);
     strncpy(key, start, l);
     key[l] = '\0';
-    return locals->get(locals, key);
+    return map_get(locals, key);
 }
 
 

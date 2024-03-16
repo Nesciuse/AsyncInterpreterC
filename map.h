@@ -6,15 +6,15 @@ struct map_struct {
     const char **keys;
     Variable *values;
     Variable def_val;
-    void (*set)(struct map_struct *, const char *, Variable);
-    void (*setint)(struct map_struct *, const char *, int);
-    Variable (*get)(struct map_struct *, const char *);
-    Variable (*remove)(struct map_struct *, const char *);
 };
 typedef struct map_struct MapObject;
 
 MapObject *new_default_map(Variable def_val);
 void map_free(MapObject *map);
+void map_set(MapObject *map, const char *key, Variable value);
+void map_setint(MapObject *map, const char *key, int value);
+Variable map_get(MapObject *map, const char *key);
+Variable map_remove(MapObject *map, const char *key);
 
 Variable evaluate(MapObject *locals, const char *expr);
 

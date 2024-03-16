@@ -15,7 +15,7 @@ void (*PrintMap[])(Variable) = {
 void _print(Context *c) {
     Variable v = c->program[c->current_line][1];
     if(v.type == Var) {
-        v = c->locals->get(c->locals, v.s);
+        v = map_get(c->locals, v.s);
     }
     PrintMap[v.type](v);
 }
@@ -36,14 +36,14 @@ void asleep(Context *c) {
     Variable *line = c->program[c->current_line];
     Variable v = line[2];
     if(v.type == Var) {
-        v = c->locals->get(c->locals, v.s);
+        v = map_get(c->locals, v.s);
     }
     g_timeout_add_once(v.i, run_context, c);
 }
 
 static inline int get_int(Context *c, Variable v) {
     if(v.type == Var) {
-        return c->locals->get(c->locals, v.s).i;
+        return map_get(c->locals, v.s).i;
     }
     return v.i;
 }
@@ -53,13 +53,13 @@ void _add(Context *c) {
     Variable a = line[1], b = line[2];
     int b_val;
     if(b.type == Var) {
-        b_val = c->locals->get(c->locals, b.s).i;
+        b_val = map_get(c->locals, b.s).i;
     }
     else {
         b_val = b.i;
     }
-    int a_val = c->locals->get(c->locals, a.s).i;
-    c->locals->set(c->locals, a.s, (Variable)integer(a_val+b_val));
+    int a_val = map_get(c->locals, a.s).i;
+    map_set(c->locals, a.s, (Variable)integer(a_val+b_val));
 }
 
 void impulse() {
@@ -114,7 +114,7 @@ void run_context(void *d) {
                 if(arg1.type == Eval) {
                     arg1 = evaluate(c->locals, arg1.s);
                 }
-                c->locals->set(c->locals, line[0].s, arg1);
+                map_set(c->locals, line[0].s, arg1);
                 c->current_line++;
                 continue;
 
