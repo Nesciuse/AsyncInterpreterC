@@ -11,6 +11,7 @@ add_executable(simple
     interpreter.c
     map.c
     variable_type.c
+    evaluator.c
 )
 
 target_link_directories(simple
