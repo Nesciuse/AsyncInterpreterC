@@ -26,6 +26,7 @@ enum {
     While,
     JumpIf,
     Async,
+    If,
     MoveForward,
     MoveHeadUp,
     MoveLeft,

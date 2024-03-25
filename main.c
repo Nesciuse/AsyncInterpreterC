@@ -2,6 +2,35 @@
 #include <glib.h>
 #include "interpreter.h"
 
+#define codeblock(...) {.type=CodeBlock, .p=(Program){__VA_ARGS__ END}}
+#define If keyword(If)
+#define program(name, ...) Variable name = codeblock(__VA_ARGS__)
+
+Program p4 = {
+    {async, moveforward, integer(50)},
+    {var(a), integer(5)},
+    {var(b), integer(50)},
+    {var(a), eval(a + b)},
+    {If, eval(a<b), codeblock(
+        {print, var(a)},
+        {print, str(" is smaller than ")},
+        {print, var(b)},
+    )},
+    {If, eval(a>b), codeblock(
+        {print, var(a)},
+        {print, str(" is bigger than ")},
+        {print, var(b)},
+    )},
+    {If, eval(a==b), codeblock(
+        {print, var(a)},
+        {print, str(" is equal to ")},
+        {print, var(b)},
+    )},
+    {print, var(a)},
+    {print, str("\n")},
+    END
+};
+
 Program p3 = {
     {async, moveforward, integer(50)},
     {var(a), integer(5)},
@@ -26,10 +55,10 @@ Program p2 = {
 };
 
 Program p1 = {
-    {var(test), integer(775)},
-    {var(test2), integer(606)},
-    {add, var(test2), var(test)},
-    {add, var(test2), var(test2)},
+    {var(a), integer(775)},
+    {var(b), integer(606)},
+    {add, var(a), var(a)},
+    {add, var(b), var(a)},
     {print, var(test2)},
     {print, str("\n")},
     {async, sleep, var(test2)},
@@ -54,7 +83,7 @@ int main(int argc, char **argv) {
 
     start_program(p1, print_end, "Program 1 ended\n");
     start_program(p2, print_end, "Program 2 ended\n");
-    start_program(p3, print_end, "Program 3 ended\n");
+    start_program(p4, print_end, "Program 3 ended\n");
 
     printf("Starting main loop\n");    
     g_main_loop_run(loop);

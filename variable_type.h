@@ -11,6 +11,7 @@ typedef enum  {
     Eval,
     Dictionary,
     End,
+    CodeBlock,
     Null
 } VariableType;
 
