@@ -89,11 +89,44 @@ void a_move_forward_start(Context *c) {
     g_timeout_add(100, a_move_forward, c);
 }
 
+void if_statement(Context *c) {
+    Variable *args = c->program[c->current_line];
+    Variable condition = args[1];
+    int is_true = 1;
+    if(condition.type == Eval) {
+        condition = evaluate(c->locals, condition.s);
+    }
+    switch(condition.type) {
+        case Integer:
+            is_true = condition.i != 0;
+            break;
+        case Float:
+            is_true = condition.f != 0.0;
+            break;
+        case Null:
+            is_true = 0;
+            break;
+        default:
+            fprintf(stderr, " unimplemented type in if check ");
+            exit(1);
+    }
+    if(is_true) {
+        ProgramLine *outer = c->program;
+        int curline = c->current_line;
+        c->program = args[2].p;
+        c->current_line = 0;
+        run_context(c);
+        c->program = outer;
+        c->current_line = curline;
+    }
+}
+
 void (*FunctionMap[])(Context *) = {
     [Print] = _print,
     [Add] = _add,
     [Sleep] = asleep,
-    [MoveForward] = a_move_forward_start
+    [MoveForward] = a_move_forward_start,
+    [If] = if_statement
 };
 
 int running_programs = 0;
