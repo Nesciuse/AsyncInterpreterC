@@ -31,7 +31,8 @@ enum {
     MoveHeadUp,
     MoveLeft,
     func_enum_size,
-    program_end
+    program_end,
+    codeblock_end
 };
 
 typedef void (*Arg1Func)(Context *, Variable);
