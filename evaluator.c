@@ -323,7 +323,9 @@ static Variable eval_identifier(MapObject *locals, const char *start, const char
     char *key = malloc(l+1);
     strncpy(key, start, l);
     key[l] = '\0';
-    return map_get(locals, key);
+    Variable v = map_get(locals, key);
+    free(key);
+    return v;
 }
 
 
@@ -376,7 +378,7 @@ void test_expr(const char *expr) {
 }
 
 void eval_testing() {
-    test_expr("(1 + 1)");
+    //test_expr("    \t\t   (   1     +    1  )     ");
     test_expr("1 > 1");
     test_expr("884 == 666");
     test_expr("884 != 666");

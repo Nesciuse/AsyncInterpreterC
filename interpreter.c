@@ -121,12 +121,49 @@ void if_statement(Context *c) {
     }
 }
 
+void while_statement(Context *c) {
+    Variable *args = c->program[c->current_line];
+    int is_true = 1;
+   
+    do {
+        Variable condition = args[1];
+        if(condition.type == Eval) {
+            condition = evaluate(c->locals, condition.s);
+        }
+        switch(condition.type) {
+            case Integer:
+                is_true = condition.i != 0;
+                break;
+            case Float:
+                is_true = condition.f != 0.0;
+                break;
+            case Null:
+                is_true = 0;
+                break;
+            default:
+                fprintf(stderr, " unimplemented type in if check ");
+                exit(1);
+        }
+
+        if(is_true) {
+            ProgramLine *outer = c->program;
+            int curline = c->current_line;
+            c->program = args[2].p;
+            c->current_line = 0;
+            run_context(c);
+            c->program = outer;
+            c->current_line = curline;
+        }
+    } while(is_true);
+}
+
 void (*FunctionMap[])(Context *) = {
     [Print] = _print,
     [Add] = _add,
     [Sleep] = asleep,
     [MoveForward] = a_move_forward_start,
-    [If] = if_statement
+    [If] = if_statement,
+    [While] = while_statement
 };
 
 int running_programs = 0;
@@ -136,6 +173,9 @@ void run_context(void *d) {
         Variable *line = c->program[c->current_line];
         switch(line[0].type) {
             case End:
+                if(line[0].i == codeblock_end) {
+                    return;
+                }
                 c->final_callback(c->data);
                 free_context(c);
                 if(--running_programs == 0) {
