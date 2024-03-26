@@ -7,14 +7,18 @@ typedef Variable ProgramLine[4];
 typedef ProgramLine Program[];
 
 typedef void (*CallbackFunctionPointer)(void*);
-typedef struct {
+struct context_obj {
     int current_line;
     ProgramLine *program;
     MapObject *locals;
     void *custom_data;
     CallbackFunctionPointer final_callback;
+    int *waiting;
+    struct context_obj *supercontext;
+    struct context_obj *subcontext;
     void *data;
-} Context;
+};
+typedef struct context_obj Context;
 
 enum {
     Sleep = 0, 
@@ -50,7 +54,9 @@ void _print(Context *c);
 #define END {{.type=End,.i=program_end}}
 
 Context *new_context();
+Context *new_subcontext();
 void free_context(Context *c);
+void free_subcontext(Context *c);
 void run_context(void *);
 void asleep(Context *c);
 void _add(Context *c);

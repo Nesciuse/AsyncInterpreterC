@@ -10,7 +10,7 @@
 
 Program p5 = {
     {var(a), integer(20)},
-    {async, sleep, integer(100)},
+    {sleep, integer(100)},
     {While, eval(a), codeblock(
         {print, str("current value of a: ")},
         {print, var(a)},
@@ -21,7 +21,7 @@ Program p5 = {
 };
 
 Program p4 = {
-    {async, moveforward, integer(50)},
+    {moveforward, integer(50)},
     {var(a), integer(5)},
     {var(b), integer(50)},
     {var(a), eval(a + b)},
@@ -46,7 +46,7 @@ Program p4 = {
 };
 
 Program p3 = {
-    {async, moveforward, integer(50)},
+    {moveforward, integer(50)},
     {var(a), integer(5)},
     {var(b), integer(50)},
     {var(a), eval(a + b)},
@@ -63,7 +63,7 @@ Program p2 = {
     {var(eval_test), eval(a + b)},
     {print, var(eval_test)},
     {print, str("\n")},
-    {async, sleep, integer(3000)},
+    {sleep, integer(3000)},
     {print, str("\nSlept for 3000 miliseconds\n")},
     END
 };
@@ -75,7 +75,7 @@ Program p1 = {
     {add, var(b), var(a)},
     {print, var(a)},
     {print, str("\n")},
-    {async, sleep, var(b)},
+    {sleep, var(b)},
     {print, str("\nSlept for ")},
     {print, var(b)},
     {print, str(" miliseconds\n")},

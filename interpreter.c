@@ -23,11 +23,46 @@ void _print(Context *c) {
 GMainLoop *loop;
 Context *new_context() {
     Context *c = malloc(sizeof(Context));
+    c->waiting = malloc(sizeof(int));
+    *c->waiting = 0;
     c->locals = new_map();
     c->current_line = 0;
+    c->subcontext = c->supercontext = NULL;
+    return c;
+}
+
+Context *new_subcontext(Context *supercontext, Program p) {
+    Context *c = malloc(sizeof(Context));
+    c->waiting = supercontext->waiting;
+    c->supercontext = supercontext;
+    c->program = p;
+    c->current_line = 0;
+    supercontext->subcontext = c;
+    c->locals = new_map();
+    c->locals->parent = supercontext->locals;
+    c->subcontext = NULL;
+    return c;
 }
 
 void free_context(Context *c) {
+    if(c->supercontext) {
+        c->supercontext->subcontext = NULL;
+    }
+    else {
+        free(c->waiting);
+    }
+    if(c->subcontext) {
+        free_context(c->subcontext);
+    }
+    map_free(c->locals);
+    free(c);
+}
+
+void free_subcontext(Context *c) {
+    if(c->subcontext) {
+        free_subcontext(c->subcontext);
+        c->subcontext = NULL;
+    }
     map_free(c->locals);
     free(c);
 }
@@ -35,10 +70,11 @@ void free_context(Context *c) {
 void run_context(void *d);
 void asleep(Context *c) {
     Variable *line = c->program[c->current_line];
-    Variable v = line[2];
+    Variable v = line[1];
     if(v.type == Var) {
         v = map_get(c->locals, v.s);
     }
+    *c->waiting = 1;
     g_timeout_add_once(v.i, run_context, c);
 }
 
@@ -71,11 +107,13 @@ gboolean a_move_forward(void *p) {
     Context *c = (Context *)p;
     if((*(int *)c->custom_data)-- > 0) {
         impulse();
+        *c->waiting = 1;
         return TRUE;
         //g_timeout_add_once(100, a_move_forward, c);
     }
     else {
         free(c->custom_data);
+        *c->waiting = 1;
         g_timeout_add_once(0, run_context, c);
     }
     return FALSE;
@@ -83,9 +121,10 @@ gboolean a_move_forward(void *p) {
 
 void a_move_forward_start(Context *c) {
     Variable *args = c->program[c->current_line];
-    int steps = get_int(c, args[2]);
+    int steps = get_int(c, args[1]);
     c->custom_data = malloc(sizeof(int));
     *((int *)c->custom_data) = steps;
+    *c->waiting = 1;
     g_timeout_add(100, a_move_forward, c);
 }
 
@@ -111,13 +150,7 @@ void if_statement(Context *c) {
             exit(1);
     }
     if(is_true) {
-        ProgramLine *outer = c->program;
-        int curline = c->current_line;
-        c->program = args[2].p;
-        c->current_line = 0;
-        run_context(c);
-        c->program = outer;
-        c->current_line = curline;
+        run_context(new_subcontext(c, args[2].p));
     }
 }
 
@@ -125,36 +158,29 @@ void while_statement(Context *c) {
     Variable *args = c->program[c->current_line];
     int is_true = 1;
    
-    do {
-        Variable condition = args[1];
-        if(condition.type == Eval) {
-            condition = evaluate(c->locals, condition.s);
-        }
-        switch(condition.type) {
-            case Integer:
-                is_true = condition.i != 0;
-                break;
-            case Float:
-                is_true = condition.f != 0.0;
-                break;
-            case Null:
-                is_true = 0;
-                break;
-            default:
-                fprintf(stderr, " unimplemented type in if check ");
-                exit(1);
-        }
+    Variable condition = args[1];
+    if(condition.type == Eval) {
+        condition = evaluate(c->locals, condition.s);
+    }
+    switch(condition.type) {
+        case Integer:
+            is_true = condition.i != 0;
+            break;
+        case Float:
+            is_true = condition.f != 0.0;
+            break;
+        case Null:
+            is_true = 0;
+            break;
+        default:
+            fprintf(stderr, " unimplemented type in if check ");
+            exit(1);
+    }
 
-        if(is_true) {
-            ProgramLine *outer = c->program;
-            int curline = c->current_line;
-            c->program = args[2].p;
-            c->current_line = 0;
-            run_context(c);
-            c->program = outer;
-            c->current_line = curline;
-        }
-    } while(is_true);
+    if(is_true) {
+        run_context(new_subcontext(c, args[2].p));
+        c->current_line--;
+    }
 }
 
 void (*FunctionMap[])(Context *) = {
@@ -169,11 +195,15 @@ void (*FunctionMap[])(Context *) = {
 int running_programs = 0;
 void run_context(void *d) {
     Context *c = (Context *)d;
+    *c->waiting = 0;
     while(1) {
         Variable *line = c->program[c->current_line];
         switch(line[0].type) {
             case End:
-                if(line[0].i == codeblock_end) {
+                if(c->supercontext) {
+                    Context *supercontext = c->supercontext;
+                    free_subcontext(c);
+                    run_context(supercontext);
                     return;
                 }
                 c->final_callback(c->data);
@@ -193,13 +223,11 @@ void run_context(void *d) {
                 continue;
 
             case KeyWord:
-                if(line[0].i == Async) {
-                    FunctionMap[line[1].i](c);
-                    c->current_line++;
-                    return;
-                }
                 FunctionMap[line[0].i](c);
                 c->current_line++;
+                if(*c->waiting) {
+                    return;
+                }
         }
     }
 }
