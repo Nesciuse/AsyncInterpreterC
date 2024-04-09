@@ -23,7 +23,6 @@ typedef struct context_obj Context;
 enum {
     Sleep = 0, 
     Print,
-    Add,
     Return,
     Call,
     Less,
@@ -35,7 +34,8 @@ enum {
     MoveHeadUp,
     MoveLeft,
     program_end,
-    codeblock_end
+    codeblock_end,
+    line_end
 };
 
 void _print(Context *c);
@@ -49,8 +49,11 @@ void _print(Context *c);
 #define While keyword(WhileKey)
 
 #define eval(expr) {.type=Eval,.s=#expr}
+
 #define END {{.type=End,.i=program_end}}
 #define CODEBLOCK_END {{.type=End,.i=codeblock_end}}
+#define LINE_END {.type=End,.i=line_end}
+
 #define codeblock(...) {.type=CodeBlock, .p=(Program){__VA_ARGS__ CODEBLOCK_END}}
 
 #define program(name, ...) Variable name = codeblock(__VA_ARGS__)

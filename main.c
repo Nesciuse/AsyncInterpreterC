@@ -2,8 +2,6 @@
 #include <glib.h>
 #include "interpreter.h"
 
-
-
 Program p5 = {
     {var(a), integer(20)},
     {sleep, integer(100)},
@@ -73,17 +71,20 @@ Program p2 = {
     END
 };
 
+#define $(...) {__VA_ARGS__ , LINE_END},
+#define intvar(a, b) $(var(a), integer(b))
+#define setvar(a, b) $(var(a), eval(b))
 Program p1 = {
-    {var(a), integer(775)},
-    {var(b), integer(606)},
-    {add, var(a), var(a)},
-    {add, var(b), var(a)},
-    {print, var(a)},
-    {print, str("\n")},
-    {sleep, var(b)},
-    {print, str("\nSlept for ")},
-    {print, var(b)},
-    {print, str(" miliseconds\n")},
+    intvar(a, 775)
+    intvar(b, 606)
+    setvar(a, a+a)
+    setvar(b, a+b)
+    $( print, var(a) )
+    $( print, str("\n") )
+    $( sleep, var(b) )
+    $( print, str("\nSlept for ") )
+    $( print, var(b) )
+    $( print, str(" miliseconds\n") )
     END
 };
 

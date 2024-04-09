@@ -5,21 +5,31 @@
 
 #include "interpreter.h"
 
-void _print_float(Variable v) { printf("%f", v.f); }
-void _print_integer(Variable v) { printf("%d", v.i); }
-void _print_string(Variable v) { printf("%s", v.s); }
-void (*PrintMap[])(Variable) = {
-    [Float] = _print_float,
-    [Integer] = _print_integer,
-    [String] = _print_string
-};
-void _print(Context *c) {
-    Variable v = c->program[c->current_line][1];
-    if(v.type == Var) {
-        v = map_get(c->locals, v.s);
+Variable get_argument_value(Context *c, int argix) {
+    Variable v = c->program[c->current_line][argix];
+    switch(v.type) {
+        case Eval:
+            return evaluate(c->locals, v.s);
+        case Var:
+            return map_get(c->locals, v.s);
     }
-    PrintMap[v.type](v);
+    return v;
 }
+
+void _print(Context *c) {
+    Variable v = get_argument_value(c, 1);
+    switch(v.type) {
+        case Float:
+            printf("%f", v.f);
+            break;
+        case Integer:
+            printf("%d", v.i);
+            break;
+        case String:
+            printf("%s", v.s);
+    }
+}
+
 GMainLoop *loop;
 Context *new_context() {
     Context *c = malloc(sizeof(Context));
@@ -61,38 +71,18 @@ void free_context(Context *c) {
 void run_context(void *d);
 void asleep(Context *c) {
     Variable *line = c->program[c->current_line];
-    Variable v = line[1];
-    if(v.type == Var) {
-        v = map_get(c->locals, v.s);
-    }
+    Variable v = get_argument_value(c, 1);
+    if(v.type != Integer) {
+        fprintf(stderr, " asleep takes integer as argument ");
+        exit(1);
+    } 
     *c->waiting = 1;
     g_timeout_add_once(v.i, run_context, c);
 }
 
-static inline int get_int(Context *c, Variable v) {
-    if(v.type == Var) {
-        return map_get(c->locals, v.s).i;
-    }
-    return v.i;
-}
-
-void _add(Context *c) {
-    Variable *line = c->program[c->current_line];
-    Variable a = line[1], b = line[2];
-    int b_val;
-    if(b.type == Var) {
-        b_val = map_get(c->locals, b.s).i;
-    }
-    else {
-        b_val = b.i;
-    }
-    int a_val = map_get(c->locals, a.s).i;
-    map_set(c->locals, a.s, (Variable)integer(a_val+b_val));
-}
-
 void impulse() {
     printf(" #> ");
-};
+}
 
 gboolean a_move_forward(void *p) {
     Context *c = (Context *)p;
@@ -112,7 +102,12 @@ gboolean a_move_forward(void *p) {
 
 void a_move_forward_start(Context *c) {
     Variable *args = c->program[c->current_line];
-    int steps = get_int(c, args[1]);
+    Variable v = get_argument_value(c, 1);
+    if(v.type != Integer) {
+        fprintf(stderr, " moveforward takes integer as argument ");
+        exit(1);
+    } 
+    int steps = v.i;
     c->custom_data = malloc(sizeof(int));
     *((int *)c->custom_data) = steps;
     *c->waiting = 1;
@@ -121,11 +116,8 @@ void a_move_forward_start(Context *c) {
 
 void if_statement(Context *c) {
     Variable *args = c->program[c->current_line];
-    Variable condition = args[1];
+    Variable condition = get_argument_value(c, 1);
     int is_true = 1;
-    if(condition.type == Eval) {
-        condition = evaluate(c->locals, condition.s);
-    }
     switch(condition.type) {
         case Integer:
             is_true = condition.i != 0;
@@ -148,12 +140,8 @@ void if_statement(Context *c) {
 
 void while_statement(Context *c) {
     Variable *args = c->program[c->current_line];
+    Variable condition = get_argument_value(c, 1);
     int is_true = 1;
-   
-    Variable condition = args[1];
-    if(condition.type == Eval) {
-        condition = evaluate(c->locals, condition.s);
-    }
     switch(condition.type) {
         case Integer:
             is_true = condition.i != 0;
@@ -165,7 +153,7 @@ void while_statement(Context *c) {
             is_true = 0;
             break;
         default:
-            fprintf(stderr, " unimplemented type in if check ");
+            fprintf(stderr, " unimplemented type in while check ");
             exit(1);
     }
 
@@ -178,7 +166,6 @@ void while_statement(Context *c) {
 
 void (*FunctionMap[])(Context *) = {
     [Print] = _print,
-    [Add] = _add,
     [Sleep] = asleep,
     [MoveForward] = a_move_forward_start,
     [IfKey] = if_statement,
