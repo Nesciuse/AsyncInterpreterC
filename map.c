@@ -7,7 +7,7 @@
 static int map_get_index(MapObject *map, const char *key);
 static void map_bloat(MapObject *map);
 
-Variable def = {.i=0};
+Variable def = {.type=Integer, .i=0};
 
 #define MAP_DEFAULT_SIZE 10
 #define new_map() new_default_map(def)
@@ -18,7 +18,8 @@ MapObject *new_default_map(Variable def_val) {
         .size = MAP_DEFAULT_SIZE,
         .def_val = def_val,
         .keys = malloc(sizeof(char *) * MAP_DEFAULT_SIZE),
-        .values = malloc(sizeof(Variable) * MAP_DEFAULT_SIZE)
+        .values = malloc(sizeof(Variable) * MAP_DEFAULT_SIZE),
+        .parent = NULL
     };
     return map;
 }
@@ -55,9 +56,16 @@ static void map_bloat(MapObject *map) {
     exit(1);
 }
 
-void map_set(MapObject *map, const char *key, Variable value) {
+int map_set(MapObject *map, const char *key, Variable value) {
     int i = map_get_index(map, key);
     if(i == -1) {
+        for(MapObject *parent = map->parent; parent != NULL; parent = parent->parent) {
+            int i = map_get_index(parent, key);
+            if(i != -1) {
+                parent->values[i] = value;
+                return 1;
+            }
+        }
         int last_element_index = map->elements;
         if(last_element_index == map->size) {
             map_bloat(map);
@@ -65,10 +73,11 @@ void map_set(MapObject *map, const char *key, Variable value) {
         map->keys[last_element_index] = key;
         map->values[last_element_index] = value;
         map->elements++;
+        return 0;
     }
-    else {
-        map->values[i] = value;
-    }
+
+    map->values[i] = value;
+    return 1;
 }
 
 void map_setint(MapObject *map, const char *key, int value) {
@@ -95,6 +104,9 @@ Variable map_remove(MapObject *map, const char *key) {
 Variable map_get(MapObject *map, const char *key) {
     int i = map_get_index(map, key);
     if(i == -1) {
+        if(map->parent) {
+            return map_get(map->parent, key);
+        }
         return map->def_val;
     }
     return map->values[i];
