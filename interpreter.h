@@ -27,21 +27,16 @@ enum {
     Return,
     Call,
     Less,
-    While,
+    WhileKey,
     JumpIf,
     Async,
-    If,
+    IfKey,
     MoveForward,
     MoveHeadUp,
     MoveLeft,
-    func_enum_size,
     program_end,
     codeblock_end
 };
-
-typedef void (*Arg1Func)(Context *, Variable);
-typedef void (*Arg2Func)(Context *, Variable, Variable);
-typedef void (*Arg3Func)(Context *, Variable, Variable, Variable);
 
 void _print(Context *c);
 
@@ -50,8 +45,16 @@ void _print(Context *c);
 #define sleep keyword(Sleep)
 #define async keyword(Async)
 #define moveforward keyword(MoveForward)
+#define If keyword(IfKey)
+#define While keyword(WhileKey)
+
 #define eval(expr) {.type=Eval,.s=#expr}
 #define END {{.type=End,.i=program_end}}
+#define CODEBLOCK_END {{.type=End,.i=codeblock_end}}
+#define codeblock(...) {.type=CodeBlock, .p=(Program){__VA_ARGS__ CODEBLOCK_END}}
+
+#define program(name, ...) Variable name = codeblock(__VA_ARGS__)
+
 
 Context *new_context();
 Context *new_subcontext();

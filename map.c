@@ -7,7 +7,7 @@
 static int map_get_index(MapObject *map, const char *key);
 static void map_bloat(MapObject *map);
 
-Variable def = {.i=0};
+Variable def = {.type=Integer, .i=0};
 
 #define MAP_DEFAULT_SIZE 10
 #define new_map() new_default_map(def)
@@ -59,7 +59,7 @@ static void map_bloat(MapObject *map) {
 int map_set(MapObject *map, const char *key, Variable value) {
     int i = map_get_index(map, key);
     if(i == -1) {
-        for(MapObject *parent = map->parent; map->parent != NULL; parent = parent->parent) {
+        for(MapObject *parent = map->parent; parent != NULL; parent = parent->parent) {
             int i = map_get_index(parent, key);
             if(i != -1) {
                 parent->values[i] = value;

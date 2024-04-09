@@ -2,11 +2,7 @@
 #include <glib.h>
 #include "interpreter.h"
 
-#define CODEBLOCK_END {{.type=End,.i=codeblock_end}}
-#define codeblock(...) {.type=CodeBlock, .p=(Program){__VA_ARGS__ CODEBLOCK_END}}
-#define If keyword(If)
-#define program(name, ...) Variable name = codeblock(__VA_ARGS__)
-#define While keyword(While)
+
 
 Program p5 = {
     {var(a), integer(20)},
@@ -16,6 +12,15 @@ Program p5 = {
         {print, var(a)},
         {print, str("\n")},
         {var(a), eval(a-1)},
+        {var(a2), integer(10)},
+        {While, eval(a2), codeblock(
+            {sleep, integer(100)},
+            {print, str("    current value of a2: ")},
+            {print, var(a2)},
+            {print, str("\n")},
+            {moveforward, var(a2)},
+            {var(a2), eval(a2-1)},
+        )},
     )},
     END
 };

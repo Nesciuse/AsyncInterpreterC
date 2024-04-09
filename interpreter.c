@@ -58,15 +58,6 @@ void free_context(Context *c) {
     free(c);
 }
 
-void free_subcontext(Context *c) {
-    if(c->subcontext) {
-        free_subcontext(c->subcontext);
-        c->subcontext = NULL;
-    }
-    map_free(c->locals);
-    free(c);
-}
-
 void run_context(void *d);
 void asleep(Context *c) {
     Variable *line = c->program[c->current_line];
@@ -150,7 +141,8 @@ void if_statement(Context *c) {
             exit(1);
     }
     if(is_true) {
-        run_context(new_subcontext(c, args[2].p));
+        *c->waiting = 1;
+        g_timeout_add_once(0, run_context, new_subcontext(c, args[2].p));
     }
 }
 
@@ -178,8 +170,9 @@ void while_statement(Context *c) {
     }
 
     if(is_true) {
-        run_context(new_subcontext(c, args[2].p));
         c->current_line--;
+        *c->waiting = 1;
+        g_timeout_add_once(0, run_context, new_subcontext(c, args[2].p));
     }
 }
 
@@ -188,8 +181,8 @@ void (*FunctionMap[])(Context *) = {
     [Add] = _add,
     [Sleep] = asleep,
     [MoveForward] = a_move_forward_start,
-    [If] = if_statement,
-    [While] = while_statement
+    [IfKey] = if_statement,
+    [WhileKey] = while_statement
 };
 
 int running_programs = 0;
@@ -202,8 +195,8 @@ void run_context(void *d) {
             case End:
                 if(c->supercontext) {
                     Context *supercontext = c->supercontext;
-                    free_subcontext(c);
-                    run_context(supercontext);
+                    free_context(c);
+                    g_timeout_add_once(0, run_context, supercontext);
                     return;
                 }
                 c->final_callback(c->data);
