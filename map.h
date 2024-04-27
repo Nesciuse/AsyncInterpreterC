@@ -15,7 +15,7 @@ typedef struct map_struct MapObject;
 
 MapObject *new_default_map(Variable def_val);
 void map_free(MapObject *map);
-int map_set(MapObject *map, const char *key, Variable value);
+Variable *map_set(MapObject *map, const char *key, Variable value);
 void map_setint(MapObject *map, const char *key, int value);
 Variable map_get(MapObject *map, const char *key);
 Variable map_remove(MapObject *map, const char *key);

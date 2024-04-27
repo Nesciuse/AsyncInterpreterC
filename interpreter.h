@@ -23,7 +23,6 @@ typedef struct context_obj Context;
 enum {
     Sleep = 0, 
     Print,
-    Return,
     Call,
     Less,
     WhileKey,
@@ -33,6 +32,7 @@ enum {
     MoveForward,
     MoveHeadUp,
     MoveLeft,
+    SetKey,
     program_end,
     codeblock_end,
     line_end
@@ -40,17 +40,23 @@ enum {
 
 void _print(Context *c);
 
-#define add keyword(Add)
 #define print keyword(Print)
+#define printl print
 #define sleep keyword(Sleep)
-#define async keyword(Async)
 #define moveforward keyword(MoveForward)
 #define If keyword(IfKey)
 #define While keyword(WhileKey)
 
+#define call keyword(Call)
+
+#define Set(v) keyword(SetKey), {.type=Var,.s=#v}
+
 #define eval(expr) {.type=Eval,.s=#expr}
 
-#define END {{.type=End,.i=program_end}}
+#define null {.type=Null,.i=0}
+#define Return {.type=End,.i=program_end}
+#define END {Return, null}
+
 #define CODEBLOCK_END {{.type=End,.i=codeblock_end}}
 #define LINE_END {.type=End,.i=line_end}
 

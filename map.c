@@ -50,20 +50,29 @@ static int map_get_index(MapObject *map, const char *key) {
     return -1;
 }
 
+Variable *map_get_address(MapObject *map, const char *key) {
+    for(int i = 0; i < map->elements; i++) {
+        if(strcmp(key, map->keys[i]) == 0) {
+            return &map->values[i];
+        }
+    }
+    return NULL;
+}
+
 static void map_bloat(MapObject *map) {
     //todo double size
     fprintf(stderr, "map full, todo map.h line: %d\n", __LINE__);
     exit(1);
 }
 
-int map_set(MapObject *map, const char *key, Variable value) {
+Variable *map_set(MapObject *map, const char *key, Variable value) {
     int i = map_get_index(map, key);
     if(i == -1) {
         for(MapObject *parent = map->parent; parent != NULL; parent = parent->parent) {
             int i = map_get_index(parent, key);
             if(i != -1) {
                 parent->values[i] = value;
-                return 1;
+                return &parent->values[i];
             }
         }
         int last_element_index = map->elements;
@@ -73,12 +82,14 @@ int map_set(MapObject *map, const char *key, Variable value) {
         map->keys[last_element_index] = key;
         map->values[last_element_index] = value;
         map->elements++;
-        return 0;
+        return &map->values[last_element_index];
     }
 
     map->values[i] = value;
-    return 1;
+    return &map->values[i];
 }
+
+
 
 void map_setint(MapObject *map, const char *key, int value) {
     map_set(map, key, (Variable){.i = value});

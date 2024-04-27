@@ -12,6 +12,10 @@ Variable get_argument_value(Context *c, int argix) {
             return evaluate(c->locals, v.s);
         case Var:
             return map_get(c->locals, v.s);
+        case KeyWord:
+            if(v.i == Call) {
+                return (Variable){.type=WaitingObject, .i=0};
+            }
     }
     return v;
 }
@@ -164,12 +168,40 @@ void while_statement(Context *c) {
     }
 }
 
+void program_call(Context *c) {
+    Variable p = get_argument_value(c, 1);
+    if(p.type != ProgramPointer) {
+        fprintf(stderr, " can call only another program ");
+        exit(1);
+    }
+}
+
+void set_key(Context *c) {
+    Variable *args = c->program[c->current_line];
+    Variable var_name = args[1];
+    Variable value = get_argument_value(c, 2);
+    
+    if(value.type == WaitingObject) {
+        *c->waiting = 1;
+        Variable prog = get_argument_value(c, 3);
+        Context *sub = new_subcontext(c, prog.p);
+        g_timeout_add_once(0, run_context, sub);
+        Variable *return_address = map_set(c->locals, var_name.s, value);
+        c->custom_data = return_address->p = return_address;
+    }
+    else {
+        map_set(c->locals, var_name.s, value);
+    }
+}
+
 void (*FunctionMap[])(Context *) = {
     [Print] = _print,
     [Sleep] = asleep,
     [MoveForward] = a_move_forward_start,
     [IfKey] = if_statement,
-    [WhileKey] = while_statement
+    [WhileKey] = while_statement,
+    [Call] = program_call,
+    [SetKey] = set_key
 };
 
 int running_programs = 0;
@@ -182,6 +214,11 @@ void run_context(void *d) {
             case End:
                 if(c->supercontext) {
                     Context *supercontext = c->supercontext;
+                    if(line[0].i == program_end && supercontext->custom_data != NULL) {
+                        Variable *return_address = supercontext->custom_data;
+                        supercontext->custom_data = NULL;
+                        *return_address = get_argument_value(c, 1);
+                    }
                     free_context(c);
                     g_timeout_add_once(0, run_context, supercontext);
                     return;
@@ -192,15 +229,6 @@ void run_context(void *d) {
                     g_main_loop_quit(loop);
                 }
                 return;
-
-            case Var:
-                Variable arg1 = line[1];
-                if(arg1.type == Eval) {
-                    arg1 = evaluate(c->locals, arg1.s);
-                }
-                map_set(c->locals, line[0].s, arg1);
-                c->current_line++;
-                continue;
 
             case KeyWord:
                 FunctionMap[line[0].i](c);
