@@ -12,6 +12,8 @@ typedef enum  {
     Dictionary,
     End,
     CodeBlock,
+    ProgramPointer,
+    WaitingObject,
     Null
 } VariableType;
 
@@ -31,5 +33,6 @@ typedef struct {
 #define str(txt) {.type=String,.s=txt}
 #define var(id) {.type=Var,.s=#id}
 #define keyword(key) {.type=KeyWord,.i=key}
+#define func(program) {.type=ProgramPointer,.p=program}
 
 #endif
