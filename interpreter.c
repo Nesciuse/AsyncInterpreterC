@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "interpreter.h"
+#include "builtins.h"
 
 Variable get_argument_value(Context *c, int argix) {
     Variable v = c->program[c->current_line][argix];
@@ -18,20 +19,6 @@ Variable get_argument_value(Context *c, int argix) {
             }
     }
     return v;
-}
-
-void _print(Context *c) {
-    Variable v = get_argument_value(c, 1);
-    switch(v.type) {
-        case Float:
-            printf("%f", v.f);
-            break;
-        case Integer:
-            printf("%d", v.i);
-            break;
-        case String:
-            printf("%s", v.s);
-    }
 }
 
 GMainLoop *loop;
@@ -70,52 +57,6 @@ void free_context(Context *c) {
     }
     map_free(c->locals);
     free(c);
-}
-
-void run_context(void *d);
-void asleep(Context *c) {
-    Variable *line = c->program[c->current_line];
-    Variable v = get_argument_value(c, 1);
-    if(v.type != Integer) {
-        fprintf(stderr, " asleep takes integer as argument ");
-        exit(1);
-    } 
-    *c->waiting = 1;
-    g_timeout_add_once(v.i, run_context, c);
-}
-
-void impulse() {
-    printf(" #> ");
-}
-
-gboolean a_move_forward(void *p) {
-    Context *c = (Context *)p;
-    if((*(int *)c->custom_data)-- > 0) {
-        impulse();
-        *c->waiting = 1;
-        return TRUE;
-        //g_timeout_add_once(100, a_move_forward, c);
-    }
-    else {
-        free(c->custom_data);
-        *c->waiting = 1;
-        g_timeout_add_once(0, run_context, c);
-    }
-    return FALSE;
-}
-
-void a_move_forward_start(Context *c) {
-    Variable *args = c->program[c->current_line];
-    Variable v = get_argument_value(c, 1);
-    if(v.type != Integer) {
-        fprintf(stderr, " moveforward takes integer as argument ");
-        exit(1);
-    } 
-    int steps = v.i;
-    c->custom_data = malloc(sizeof(int));
-    *((int *)c->custom_data) = steps;
-    *c->waiting = 1;
-    g_timeout_add(100, a_move_forward, c);
 }
 
 void if_statement(Context *c) {
@@ -194,10 +135,7 @@ void set_key(Context *c) {
     }
 }
 
-void (*FunctionMap[])(Context *) = {
-    [Print] = _print,
-    [Sleep] = asleep,
-    [MoveForward] = a_move_forward_start,
+void (*KeywordMap[])(Context *) = {
     [IfKey] = if_statement,
     [WhileKey] = while_statement,
     [Call] = program_call,
@@ -230,12 +168,18 @@ void run_context(void *d) {
                 }
                 return;
 
+            case Builtin:
+                line[0].pf(c);
+                break;
+
             case KeyWord:
-                FunctionMap[line[0].i](c);
-                c->current_line++;
-                if(*c->waiting) {
-                    return;
-                }
+                KeywordMap[line[0].i](c);
+                break;
+            }
+            
+        c->current_line++;
+        if(*c->waiting) {
+            return;
         }
     }
 }

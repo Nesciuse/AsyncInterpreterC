@@ -9,6 +9,7 @@ include_directories(
 add_executable(simple
     main.c
     interpreter.c
+    builtins.c
     map.c
     variable_type.c
     evaluator.c

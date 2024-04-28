@@ -21,29 +21,15 @@ struct context_obj {
 typedef struct context_obj Context;
 
 enum {
-    Sleep = 0, 
-    Print,
     Call,
-    Less,
     WhileKey,
-    JumpIf,
-    Async,
     IfKey,
-    MoveForward,
-    MoveHeadUp,
-    MoveLeft,
     SetKey,
     program_end,
     codeblock_end,
     line_end
 };
 
-void _print(Context *c);
-
-#define print keyword(Print)
-#define printl print
-#define sleep keyword(Sleep)
-#define moveforward keyword(MoveForward)
 #define If keyword(IfKey)
 #define While keyword(WhileKey)
 
@@ -68,15 +54,15 @@ void _print(Context *c);
 Context *new_context();
 Context *new_subcontext();
 void free_context(Context *c);
-void free_subcontext(Context *c);
 void run_context(void *);
-void asleep(Context *c);
-void _add(Context *c);
+void builtin_async_sleep(Context *c);
 gboolean a_move_forward(void *p);
 void a_move_forward_start(Context *c);
 void start_program(Program program, CallbackFunctionPointer final_callback, void *data);
 void print_end(void *text);
 void quit(void *loop);
+
+Variable get_argument_value(Context *c, int argix);
 
 extern GMainLoop *loop;
 
