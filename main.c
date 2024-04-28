@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <glib.h>
 #include "interpreter.h"
+#include "builtins.h"
 
 Program p5 = {
     {Set(a), integer(20)},
@@ -17,7 +18,7 @@ Program p5 = {
             {print, var(a2)},
             {print, str("\n")},
             {If, eval(a2==5), codeblock(
-                {print, str("\na2 is equal to 5 sleeping for 1 second\n")},
+                {print, str("\na2 is equal to 5\nSleeping for 1 second\n")},
                 {sleep, integer(1000)},
             )},
             {Set(a2), eval(a2-1)},
@@ -148,10 +149,10 @@ int main(int argc, char **argv) {
     loop = g_main_loop_new(NULL, FALSE);
 
     start_program(print_retnum, print_end, "Calling program ended\n");
-    // start_program(p1, print_end, "Program 1 ended\n");
-    // start_program(p2, print_end, "Program 2 ended\n");
-    // start_program(p4, print_end, "Program 4 ended\n");
-    // start_program(p5, print_end, "Program 5 ended\n");
+    start_program(p1, print_end, "Program 1 ended\n");
+    start_program(p2, print_end, "Program 2 ended\n");
+    start_program(p4, print_end, "Program 4 ended\n");
+    start_program(p5, print_end, "Program 5 ended\n");
     Program test = {
         {Set(a), integer(666)},
         {Set(b), integer(85545)},
