@@ -20,8 +20,6 @@ void map_setint(MapObject *map, const char *key, int value);
 Variable map_get(MapObject *map, const char *key);
 Variable map_remove(MapObject *map, const char *key);
 
-Variable evaluate(MapObject *locals, const char *expr);
-
 #define new_map() new_default_map(def)
 
 extern Variable def;

@@ -3,7 +3,7 @@
 
 #include "interpreter.h"
 
-#define BUILTIN_FUNC(name) void name(Context *c)
+#define BUILTIN_FUNC(name) Variable name(Context *c)
 
 BUILTIN_FUNC(builtin_print);
 #define print builtin(builtin_print)

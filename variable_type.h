@@ -2,7 +2,8 @@
 #define H_VARIABLE_TYPE
 
 typedef enum  {
-    Integer = 0,
+    Null,
+    Integer,
     Float,
     String,
     KeyWord,
@@ -14,22 +15,24 @@ typedef enum  {
     End,
     CodeBlock,
     ProgramPointer,
-    WaitingObject,
-    Null
+    WaitingObject
 } VariableType;
 
 extern const char *VariableTypeString[];
 
-typedef struct {
+struct variable {
     VariableType type;
     union {
         const char *s;
         int i;
         float f;
         void *p;
-        void (*pf)();
+        struct variable (*pf)();
     };
-} Variable;
+};
+typedef struct variable Variable;
+
+#define null() {.type=Null,.i=0}
 
 #define integer(num) {.type=Integer,.i=num}
 #define str(txt) {.type=String,.s=txt}

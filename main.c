@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <glib.h>
 #include "interpreter.h"
 #include "builtins.h"
 
@@ -108,10 +107,10 @@ Program big = {
 };
 
 Program print_retnum = {
-    {Set(b), call, func(factorial_5)},
+    {Set(b), func(factorial_5)},
     {print, str("!5 = ")},
     {print, var(b)},
-    {Set(b), call, func(big)},
+    {Set(b), func(big)},
     {print, str("\nbig = ")},
     {print, var(b)},
     END
@@ -136,7 +135,13 @@ Program p1 = {
 
 #define TESTING 0
 
+void print_end(void *text) {
+    printf("%s", (const char *) text);
+}
+
 int main(int argc, char **argv) {
+    init_interpreter();
+
     if(TESTING) {
         printf("Starting testing\n");
         eval_testing();
@@ -144,30 +149,13 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    printf("Program starting\n");
-
-    loop = g_main_loop_new(NULL, FALSE);
-
     start_program(print_retnum, print_end, "Calling program ended\n");
-    start_program(p1, print_end, "Program 1 ended\n");
-    start_program(p2, print_end, "Program 2 ended\n");
-    start_program(p4, print_end, "Program 4 ended\n");
-    start_program(p5, print_end, "Program 5 ended\n");
-    Program test = {
-        {Set(a), integer(666)},
-        {Set(b), integer(85545)},
-        {sleep, integer(100)},
-        {Set(ab), eval(a+b)},
-        {print, var(ab)},
-        END
-    };
-   // start_program(test, print_end, "Program 5 ended\n");
-
-    printf("Starting main loop\n");    
-    g_main_loop_run(loop);
-    g_main_loop_unref(loop);
-
-    printf("Program finished\n");
+    // start_program(p1, print_end, "Program 1 ended\n");
+    // start_program(p2, print_end, "Program 2 ended\n");
+    // start_program(p4, print_end, "Program 4 ended\n");
+    // start_program(p5, print_end, "Program 5 ended\n");
+    
+    start_interpreter();
     return 0;
 }
 
