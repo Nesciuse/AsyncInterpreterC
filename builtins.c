@@ -15,6 +15,7 @@ BUILTIN_FUNC(builtin_print) {
         case String:
             printf("%s", v.s);
     }
+    return null;
 }
 
 BUILTIN_FUNC(builtin_async_sleep) {
@@ -26,13 +27,14 @@ BUILTIN_FUNC(builtin_async_sleep) {
     } 
     *c->waiting = 1;
     g_timeout_add_once(v.i, run_context, c);
+    return null;
 }
 
 static void impulse() {
     printf(" #> ");
 }
 
-gboolean a_move_forward(void *p) {
+static gboolean a_move_forward(void *p) {
     Context *c = (Context *)p;
     if((*(int *)c->custom_data)-- > 0) {
         impulse();
@@ -60,4 +62,11 @@ BUILTIN_FUNC(builtin_async_move_forward_start) {
     *((int *)c->custom_data) = steps;
     *c->waiting = 1;
     g_timeout_add(100, a_move_forward, c);
+
+    return null;
+}
+
+extern Variable evaluate(MapObject *locals, const char* expr);
+BUILTIN_FUNC(builtin_evuluate) {
+    return evaluate(c->locals, "");
 }
