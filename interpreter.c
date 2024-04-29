@@ -48,8 +48,8 @@ Variable get_argument_value(Context *c, int argix) {
 
 Context *new_context() {
     Context *c = malloc(sizeof(Context));
-    c->waiting = malloc(sizeof(int));
-    *c->waiting = 0;
+    c->status = malloc(sizeof(int));
+    *c->status = Running;
     c->locals = new_map();
     c->current_line = 0;
     c->subcontext = c->supercontext = NULL;
@@ -58,7 +58,7 @@ Context *new_context() {
 
 Context *new_subcontext(Context *supercontext, Program p) {
     Context *c = malloc(sizeof(Context));
-    c->waiting = supercontext->waiting;
+    c->status = supercontext->status;
     c->supercontext = supercontext;
     c->program = p;
     c->current_line = 0;
@@ -70,7 +70,7 @@ Context *new_subcontext(Context *supercontext, Program p) {
 }
 
 static inline void run_codeblock(Context *c, void *codeblock) {
-    *c->waiting = 1;
+    *c->status = Waiting;
     g_timeout_add_once(0, run_context, new_subcontext(c, codeblock));
 }
 
@@ -79,7 +79,7 @@ void free_context(Context *c) {
         c->supercontext->subcontext = NULL;
     }
     else {
-        free(c->waiting);
+        free(c->status);
     }
     if(c->subcontext) {
         free_context(c->subcontext);
@@ -136,11 +136,40 @@ void while_statement(Context *c) {
     }
 }
 
+struct ret {
+    Context *caller;
+    Context *callee;
+};
+
+void set_return(void *d) {
+    struct ret *r = d;
+    Variable *retadr = r->caller->custom_data;
+    r->caller->custom_data = NULL;
+
+    Variable retval = *((Variable *) r->callee->custom_data);
+    r->callee->custom_data = NULL;
+
+    *retadr = retval;
+
+    Context *c = r->caller;
+    free(r);
+    g_timeout_add_once(0, run_context, c);
+}
+
+int running_programs = 0;
+
 void program_call(Context *c, void *program, Variable *return_address) {
-    *c->waiting = 1;
+    *c->status = Waiting;
     c->custom_data = return_address;
-    Context *sub = new_subcontext(c, program);
-    g_timeout_add_once(0, run_context, sub);
+
+    Context *newctx = new_context();
+    newctx->program = program;
+    newctx->final_callback = set_return;
+    newctx->data = malloc(sizeof(struct ret));
+    *((struct ret *)newctx->data) = (struct ret){.caller=c, .callee=newctx};
+    
+    running_programs++;
+    g_timeout_add_once(0, run_context, newctx);
 }
 
 void set_key(Context *c) {
@@ -163,33 +192,64 @@ void (*KeywordMap[])(Context *) = {
     [SetKey] = set_key
 };
 
-int running_programs = 0;
+
+
+static inline Context *collapse_subcontexts(Context *c) {
+    Context *cur = c, *sup;
+    while((sup = cur->supercontext) != NULL) {
+        free_context(cur);
+        cur = sup;
+    }
+    return cur;
+}
+
+static inline void finish_context(Context *c) {
+    c->final_callback(c->data);
+    free_context(c);
+    if(--running_programs == 0) {
+        quit_interpreter();
+    }
+}
+
 void run_context(void *d) {
     Context *c = (Context *)d;
-    *c->waiting = 0;
+    
+    switch(*c->status) {
+        case Waiting:
+            *c->status = Running;
+            break;
+        case Ended:
+            finish_context(collapse_subcontexts(c));
+            return;
+    }
+    
     while(1) {
         Variable *line = c->program[c->current_line];
         Variable arg0 = line[0];
         switch(arg0.type) {
             case End:
-                if(c->supercontext) {
-                    Context *supercontext = c->supercontext;
-                    if(arg0.i == program_end && supercontext->custom_data != NULL) {
-                        Variable *return_address = supercontext->custom_data;
-                        supercontext->custom_data = NULL;
-                        *return_address = get_argument_value(c, 1);
-                    }
-                    free_context(c);
-                    g_timeout_add_once(0, run_context, supercontext);
-                    return;
-                }
+                switch(arg0.i) {
+                    case program_end:
+                        Variable retval = get_argument_value(c, 1);
+                        Context *root = collapse_subcontexts(c);
+                        root->custom_data = &retval;
+                        finish_context(root);
+                        return;
 
-                c->final_callback(c->data);
-                free_context(c);
-                if(--running_programs == 0) {
-                    quit_interpreter();
+                    case codeblock_end:
+                        if(c->supercontext == NULL) {
+                            fprintf(stderr, " codeblock end without supercontext ???");
+                            exit(1);
+                        }
+                        Context *supercontext = c->supercontext;
+                        free_context(c);
+                        g_timeout_add_once(0, run_context, supercontext);
+                        return;
+
+                    default:
+                        fprintf(stderr, " invalid End symbol");
+                        exit(1);
                 }
-                return;
 
             case Builtin:
                 arg0.pf(c);
@@ -201,7 +261,7 @@ void run_context(void *d) {
             }
             
         c->current_line++;
-        if(*c->waiting) {
+        if(*c->status) {
             return;
         }
     }
