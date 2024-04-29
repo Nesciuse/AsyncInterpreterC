@@ -25,7 +25,7 @@ BUILTIN_FUNC(builtin_async_sleep) {
         fprintf(stderr, " asleep takes integer as argument ");
         exit(1);
     } 
-    *c->waiting = 1;
+    *c->status = 1;
     g_timeout_add_once(v.i, run_context, c);
     return null;
 }
@@ -38,13 +38,13 @@ static gboolean a_move_forward(void *p) {
     Context *c = (Context *)p;
     if((*(int *)c->custom_data)-- > 0) {
         impulse();
-        *c->waiting = 1;
+        *c->status = 1;
         return TRUE;
         //g_timeout_add_once(100, a_move_forward, c);
     }
     else {
         free(c->custom_data);
-        *c->waiting = 1;
+        *c->status = 1;
         g_timeout_add_once(0, run_context, c);
     }
     return FALSE;
@@ -60,7 +60,7 @@ BUILTIN_FUNC(builtin_async_move_forward_start) {
     int steps = v.i;
     c->custom_data = malloc(sizeof(int));
     *((int *)c->custom_data) = steps;
-    *c->waiting = 1;
+    *c->status = 1;
     g_timeout_add(100, a_move_forward, c);
 
     return null;
