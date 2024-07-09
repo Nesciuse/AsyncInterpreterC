@@ -1,3 +1,5 @@
+Unfinished project
+
 # Async Interpreter C
 Téma: Asynchrónny interpreter
 
