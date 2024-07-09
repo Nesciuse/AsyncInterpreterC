@@ -8,3 +8,6 @@ Annotation: In asynchronous programming various asynchronous operations are usua
 Goal: Design and implement an interpreter of simple but asynchronous instructions.
 Instructions should include ones that allow working with variables, control flow statements and procedure / function calls.
 It should be easy to integrate the interpreter into different C/C++ projects with asynchronous design.
+
+# Examples of interpreted code
+https://github.com/Nesciuse/AsyncInterpreterC/blob/main/main.c
