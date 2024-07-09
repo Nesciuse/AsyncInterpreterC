@@ -1,8 +1,10 @@
 Unfinished project
 
 # Async Interpreter C
-Téma: Asynchrónny interpreter
+Theme: Asynchronous interpreter
 
-Anotácia: Pri asynchrónnom programovaní sa zvyčajne v rámci hlavnej slučky programu (mainloop) vykonávajú rôzne asynchrónne operácie. Asynchrónna funkcia je potom funkcia, ktorá môže okrem synchrónnych operácií obsahovať aj asynchrónne. Vykonanie asynchrónnej operácie potom znamená pozastavenie / odloženie celej funkcie, kým táto operácia neskončí. Hlavná slučka medzitým môže vykonávať iné operácia / funkcie. Keď daná operácia skončí, vykonávanie funkcie musí byť obnovené na správnom mieste.
+Annotation: In asynchronous programming various asynchronous operations are usually executed inside a main loop. An asynchronous function is then a function that, in addition to synchronous operations, can contain a number of asynchronous ones. Execution of an asynchronous operation means that the function needs to be suspend while waiting for the operation to finish. In the meantime the main loop can execute other operations and functions. When the given operation finishes, the encompassing function needs to be resumed in the correct position.
 
-Cieľ: Navrhnúť a implementovať interpreter jednoduchých inštrukcií, ktoré sú ale "asynchrónne". Inštrukcie by mali zahŕňať prácu s premennými, príkazy na kontrolu toku programu a volania podprogramov / funkcií. Interpreter by mal byť ľahko použiteľný v rôznych C/C++ projektoch s asynchrónnym dizajnom.
+Goal: Design and implement an interpreter of simple but asynchronous instructions.
+Instructions should include ones that allow working with variables, control flow statements and procedure / function calls.
+It should be easy to integrate the interpreter into different C/C++ projects with asynchronous design.
